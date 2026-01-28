@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { createChart } from "lightweight-charts";
-import { getDailyData, getIntradayData } from "../services/stockApi";
+import { createChart, CandlestickSeries } from "lightweight-charts";
+import { getDailyData } from "../services/stockApi";
 
 export default function StockChart({
   stock,
@@ -8,40 +8,59 @@ export default function StockChart({
   setLoading,
   setError,
 }) {
-  const chartRef = useRef();
+  const chartRef = useRef(null);
 
   useEffect(() => {
-    if (!chartRef.current) return;
+    if (!chartRef.current || !stock) return;
 
+    // 1️⃣ Create chart
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
       height: 400,
+      layout: {
+        background: { color: "#111" },
+        textColor: "#fff",
+      },
+      grid: {
+        vertLines: { color: "#222" },
+        horzLines: { color: "#222" },
+      },
     });
 
-    const candleSeries = chart.addSeries("Candlestick");
+    // 2️⃣ Add candlestick series (v4)
+    const candleSeries = chart.addSeries(CandlestickSeries);
 
-    const toUnixTime = (timeStr) =>
-      Math.floor(new Date(timeStr).getTime() / 1000);
+    // 3️⃣ Convert Alpha Vantage date → UNIX seconds
+    const toUnixTime = (dateStr) =>
+      Math.floor(new Date(dateStr).getTime() / 1000);
 
+    // 4️⃣ Slice data for timeframe
+    const sliceByTimeframe = (data, timeframe) => {
+      const map = {
+        "5D": 5,
+        "1M": 30,
+        "6M": 180,
+        "1Y": 365,
+      };
+
+      return map[timeframe] ? data.slice(-map[timeframe]) : data;
+    };
+
+    // 5️⃣ Fetch + render data
     const fetchData = async () => {
       try {
         setLoading(true);
         setError("");
 
-        let rawData;
+        const rawData = await getDailyData(stock);
 
-        if (timeframe.includes("min") || timeframe === "1H") {
-          const interval = timeframe === "1H" ? "60min" : timeframe;
-          rawData = await getIntradayData(stock, interval);
-        } else {
-          rawData = await getDailyData(stock);
+        if (!rawData || Object.keys(rawData).length === 0) {
+          throw new Error("No data returned from API");
         }
 
-        if (!rawData) throw new Error("No data");
-
-        const data = Object.entries(rawData)
-          .map(([time, d]) => ({
-            time: toUnixTime(time),
+        let formattedData = Object.entries(rawData)
+          .map(([date, d]) => ({
+            time: toUnixTime(date),
             open: Number(d["1. open"]),
             high: Number(d["2. high"]),
             low: Number(d["3. low"]),
@@ -49,10 +68,12 @@ export default function StockChart({
           }))
           .reverse();
 
-        candleSeries.setData(data);
+        formattedData = sliceByTimeframe(formattedData, timeframe);
+
+        candleSeries.setData(formattedData);
       } catch (err) {
-        console.error(err);
-        setError("API limit reached or network error");
+        console.error("Chart error:", err);
+        setError("Failed to load chart data");
       } finally {
         setLoading(false);
       }
@@ -60,7 +81,10 @@ export default function StockChart({
 
     fetchData();
 
-    return () => chart.remove();
+    // 6️⃣ Cleanup
+    return () => {
+      chart.remove();
+    };
   }, [stock, timeframe]);
 
   return <div ref={chartRef} />;
