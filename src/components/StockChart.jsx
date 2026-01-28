@@ -13,7 +13,6 @@ export default function StockChart({
   useEffect(() => {
     if (!chartRef.current || !stock) return;
 
-    // 1️⃣ Create chart
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
       height: 400,
@@ -27,14 +26,12 @@ export default function StockChart({
       },
     });
 
-    // 2️⃣ Add candlestick series (v4)
+
     const candleSeries = chart.addSeries(CandlestickSeries);
 
-    // 3️⃣ Convert Alpha Vantage date → UNIX seconds
     const toUnixTime = (dateStr) =>
       Math.floor(new Date(dateStr).getTime() / 1000);
 
-    // 4️⃣ Slice data for timeframe
     const sliceByTimeframe = (data, timeframe) => {
       const map = {
         "5D": 5,
@@ -46,7 +43,6 @@ export default function StockChart({
       return map[timeframe] ? data.slice(-map[timeframe]) : data;
     };
 
-    // 5️⃣ Fetch + render data
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -81,11 +77,10 @@ export default function StockChart({
 
     fetchData();
 
-    // 6️⃣ Cleanup
     return () => {
       chart.remove();
     };
   }, [stock, timeframe]);
 
-  return <div ref={chartRef} />;
+  return <div ref={chartRef} className="w-full rounded-lg border border-gray-300 shadow-lg" />;
 }
