@@ -1,4 +1,4 @@
-import useWatchlist from "../hooks/useWatchlist";
+import { useWatchlist } from "../context/WatchlistContext";
 
 export default function Watchlist({ onSelect }) {
   const { watchlist, removeStock } = useWatchlist();

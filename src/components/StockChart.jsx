@@ -9,9 +9,12 @@ export default function StockChart({
   setError,
 }) {
   const chartRef = useRef(null);
+  const retryRef = useRef(false);
 
   useEffect(() => {
     if (!chartRef.current || !stock) return;
+
+    retryRef.current = false; // reset retry on new stock/timeframe
 
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
@@ -26,7 +29,6 @@ export default function StockChart({
       },
     });
 
-
     const candleSeries = chart.addSeries(CandlestickSeries);
 
     const toUnixTime = (dateStr) =>
@@ -39,8 +41,21 @@ export default function StockChart({
         "6M": 180,
         "1Y": 365,
       };
-
       return map[timeframe] ? data.slice(-map[timeframe]) : data;
+    };
+
+    const isValidOHLC = (data) => {
+      if (!data || typeof data !== "object") return false;
+      const firstKey = Object.keys(data)[0];
+      if (!firstKey) return false;
+      const candle = data[firstKey];
+      return (
+        candle &&
+        candle["1. open"] &&
+        candle["2. high"] &&
+        candle["3. low"] &&
+        candle["4. close"]
+      );
     };
 
     const fetchData = async () => {
@@ -50,8 +65,16 @@ export default function StockChart({
 
         const rawData = await getDailyData(stock);
 
-        if (!rawData || Object.keys(rawData).length === 0) {
-          throw new Error("No data returned from API");
+        // 🔁 retry once if API returns non-OHLC response
+        if (!isValidOHLC(rawData)) {
+          if (!retryRef.current) {
+            retryRef.current = true;
+            setTimeout(fetchData, 800); // retry after short delay
+            return;
+          } else {
+            setError("Data temporarily unavailable. Try again.");
+            return;
+          }
         }
 
         let formattedData = Object.entries(rawData)
@@ -65,7 +88,6 @@ export default function StockChart({
           .reverse();
 
         formattedData = sliceByTimeframe(formattedData, timeframe);
-
         candleSeries.setData(formattedData);
       } catch (err) {
         console.error("Chart error:", err);
@@ -77,10 +99,13 @@ export default function StockChart({
 
     fetchData();
 
-    return () => {
-      chart.remove();
-    };
+    return () => chart.remove();
   }, [stock, timeframe]);
 
-  return <div ref={chartRef} className="w-full rounded-lg border border-gray-300 shadow-lg" />;
+  return (
+    <div
+      ref={chartRef}
+      className="w-full   rounded-lg   shadow-lg"
+    />
+  );
 }
