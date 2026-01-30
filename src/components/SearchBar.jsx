@@ -13,7 +13,7 @@ export default function SearchBar({ onSelect }) {
       const data = await searchStock(value);
       console.log("API result:", data);
 
-      // ✅ IMPORTANT: ignore empty responses
+      
       if (Array.isArray(data) && data.length > 0) {
         setResults(data);
       }
@@ -25,13 +25,11 @@ export default function SearchBar({ onSelect }) {
     const value = e.target.value;
     setQuery(value);
 
-    // clear only when input is empty
     if (!value.trim()) {
       setResults([]);
       return;
     }
 
-    // optional: reduce API noise
     if (value.length < 2) return;
 
     debouncedSearch(value);

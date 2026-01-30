@@ -14,7 +14,7 @@ export default function StockChart({
   useEffect(() => {
     if (!chartRef.current || !stock) return;
 
-    retryRef.current = false; // reset retry on new stock/timeframe
+    retryRef.current = false; 
 
     const chart = createChart(chartRef.current, {
       width: chartRef.current.clientWidth,
@@ -65,11 +65,10 @@ export default function StockChart({
 
         const rawData = await getDailyData(stock);
 
-        // 🔁 retry once if API returns non-OHLC response
         if (!isValidOHLC(rawData)) {
           if (!retryRef.current) {
             retryRef.current = true;
-            setTimeout(fetchData, 800); // retry after short delay
+            setTimeout(fetchData, 800);
             return;
           } else {
             setError("Data temporarily unavailable. Try again.");
