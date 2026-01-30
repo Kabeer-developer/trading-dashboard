@@ -68,7 +68,7 @@ export default function StockChart({
         if (!isValidOHLC(rawData)) {
           if (!retryRef.current) {
             retryRef.current = true;
-            setTimeout(fetchData, 800);
+            setTimeout(fetchData, 800); 
             return;
           } else {
             setError("Data temporarily unavailable. Try again.");

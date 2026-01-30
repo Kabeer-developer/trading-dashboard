@@ -18,18 +18,20 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen  bg-gray-950 transition-colors">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-950">
+      <div className="w-full max-w-7xl mx-auto px-4 py-4 sm:px-6 sm:py-8">
 
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black dark:text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
             Trading Dashboard
           </h1>
         </div>
 
-        <SearchBar onSelect={handleSelectStock} />
+        <div className="mb-6">
+          <SearchBar onSelect={handleSelectStock} />
+        </div>
 
-        <div className="my-6 text-white">
+        <div className="mb-6">
           <TimeFrameSelector
             timeframe={timeframe}
             setTimeframe={setTimeframe}
@@ -37,29 +39,31 @@ export default function Dashboard() {
         </div>
 
         {error && (
-          <p className="text-center text-red-500 dark:text-red-400 py-4 font-medium">
+          <p className="text-center text-red-500 py-4 font-medium">
             {error}
           </p>
         )}
 
         {loading && (
-          <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+          <p className="text-center text-gray-400 py-4">
             Loading...
           </p>
         )}
 
         {selectedStock && (
-          <>
+          <div className="mb-6">
             <StockHeader symbol={selectedStock} />
 
-            <StockChart
-              key={`${selectedStock}-${timeframe}`}
-              stock={selectedStock}
-              timeframe={timeframe}
-              setLoading={setLoading}
-              setError={setError}
-            />
-          </>
+            <div className="mt-4">
+              <StockChart
+                key={`${selectedStock}-${timeframe}`}
+                stock={selectedStock}
+                timeframe={timeframe}
+                setLoading={setLoading}
+                setError={setError}
+              />
+            </div>
+          </div>
         )}
 
         <Watchlist onSelect={handleSelectStock} />
