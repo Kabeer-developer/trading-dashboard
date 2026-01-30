@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { searchStock } from "../services/stockApi";
-import { debounce } from "../utils/debounce";
+import { debounce } from "../utils/Debounce";
 
 export default function SearchBar({ onSelect }) {
   const [query, setQuery] = useState("");
